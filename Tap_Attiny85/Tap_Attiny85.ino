@@ -5,7 +5,37 @@
     Arduino proximity sensor
     by Awais Alvi 2018
 */
-#include "Tap_Attiny13.h"
+#include "Tap_Attiny85.h"
+
+#define numReadings 3
+
+class IR_Control
+{
+        // Constructor - creates a IR_Control
+        // and initializes the member variables and state
+    public:
+        IR_Control() {};
+        int getDist() {
+            total = total - distRead;
+            distRead = analogRead(snsrInPin);
+            total = total + distRead;
+            readIndex++;
+
+            if (readIndex >= numReadings) {
+                readIndex = 0;
+                return total;
+            }
+            delay1(1);
+            return -1;
+        }
+    private:
+        int distRead;           // the readings from the analog input
+        int readIndex = 0;      // the index of the current reading
+        int total = 0;          // the running total
+
+};
+
+IR_Control IR_on, IR_off;
 
 void setup()
 {
@@ -23,18 +53,22 @@ void setup()
 void closeTAP() {
     digitalWrite(mtrPin1, LOW);
     digitalWrite(mtrPin2, HIGH);
-    digitalWrite(4, HIGH);
-    delay(pulseTime);
-    digitalWrite(4, LOW);
+#ifdef H_PWM
+    digitalWrite(H_PWM, HIGH);
+#endif
+    delay1(pulseTime);
+#ifdef H_PWM
+    digitalWrite(H_PWM, LOW);
+#endif
     digitalWrite(mtrPin2, LOW);
-    
+
 #ifdef SERIAL_DEBUG
     Serial.println("TAP Closed");
 #endif
 
 #ifdef LED
     digitalWrite(LED, HIGH);
-    delay(pulseTime);
+    delay1(pulseTime);
     digitalWrite(LED, LOW);
 #endif
 
@@ -45,20 +79,25 @@ void closeTAP() {
 void openTAP() {
     digitalWrite(mtrPin2, LOW);
     digitalWrite(mtrPin1, HIGH);
-    digitalWrite(4, HIGH);
-    delay(pulseTime);
-    digitalWrite(4, LOW);
+#ifdef H_PWM
+    digitalWrite(H_PWM, HIGH);
+#endif
+    delay1(pulseTime);
+#ifdef H_PWM
+    digitalWrite(H_PWM, LOW);
+#endif
     digitalWrite(mtrPin1, LOW);
-    
+
     previousMillis = millis();
 
+    delay1(500);
 #ifdef SERIAL_DEBUG
     Serial.println("TAP Opened");
 #endif
 
 #ifdef LED
     digitalWrite(LED, HIGH);
-    delay(pulseTime);
+    delay1(pulseTime);
     digitalWrite(LED, LOW);
 #endif
 
@@ -69,13 +108,13 @@ void openTAP() {
 
 void loop() {
     digitalWrite(irOutPin, HIGH);
-    delay(10);
-    LedOnstate();
+    delay1(10);
+    int distON = IR_on.getDist();
     digitalWrite(irOutPin, LOW);
-    delay(10);
-    LedOffstate();
-    if (readIndex >= numReadings - 1 || readIndex2 >= numReadings - 1) {
-        int diff = total2 - total;
+    delay1(10);
+    int distOFF = IR_off.getDist();;
+    if (distOFF >= 0 || distON >= 0) {
+        int diff = distOFF - distON;
 #ifdef SERIAL_DEBUG
         Serial.println(diff);
 #endif
@@ -106,43 +145,6 @@ void loop() {
             tapConst = true;
         }
     }
-    delay(1);
+    delay1(1);
 }
 
-void LedOnstate() {
-    total = total - readings[readIndex];
-    readings[readIndex] = analogRead(snsrInPin);
-    total = total + readings[readIndex];
-    readIndex = readIndex + 1;
-
-    if (readIndex >= numReadings) {
-        readIndex = 0;
-        average = total / numReadings;
-    }
-    delay(1);
-}
-
-void LedOffstate() {
-    total2 = total2 - readings2[readIndex2];
-    readings2[readIndex2] = analogRead(snsrInPin);
-    total2 = total2 + readings2[readIndex2];
-    readIndex2 = readIndex2 + 1;
-
-    if (readIndex2 >= numReadings) {
-        readIndex2 = 0;
-        average2 = total2 / numReadings;
-    }
-    delay(1);
-}
-
-void delay1(int msec)
-{
-    //delay(1) is too costly in memory. Why is this so much cheaper? :D
-    long start = millis();
-    while (true)
-    {
-        if (millis() - start > msec) {
-            break;
-        }
-    }
-}
