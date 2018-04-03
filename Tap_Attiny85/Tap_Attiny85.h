@@ -3,9 +3,11 @@
     by Awais Alvi 2018
 */
 #define tiny true
+//#define tiny85 true
+//#define nano true
 //#define SERIAL_DEBUG 1
 //#define LED 13
-#define H_PWM 0
+#define H_PWM 0//5
 
 #ifdef tiny
 /*
@@ -14,14 +16,28 @@
     #define ClearPin(Bit)    PORTB &= ~(1 << Bit)
 */
 // wire your IR led to this pin. (chip pin 3);
-#define irOutPin 1//3 - ATTINY85
+#define irOutPin 1
 // These pins go high when the sensor detects and obstacle. (chip pin 0/1)
-#define mtrPin1 3//1 - ATTINY85
-#define mtrPin2 4//0 - ATTINY85
+#define mtrPin1 3
+#define mtrPin2 4
 
 // wire this pin to your phototrans vcc-->10K res-->pin4-->phototrans-->gnd (chip pin A1)
 #define snsrInPin A1
 
+#endif
+
+#ifdef tiny85 
+#define irOutPin 3
+#define mtrPin1 1
+#define mtrPin2 0
+#define snsrInPin A0 /* TO-DO */
+#endif
+
+#ifdef nano
+#define irOutPin 9
+#define mtrPin1 3
+#define mtrPin2 2
+#define snsrInPin A0
 #endif
 
 #ifndef tiny
@@ -38,7 +54,7 @@
 
 #endif
 
-#define IRthres 250
+#define IRthres 300
 #define pulseTime 100
 
 // constants won't change:
