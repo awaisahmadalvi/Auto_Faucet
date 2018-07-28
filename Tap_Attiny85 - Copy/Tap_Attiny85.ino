@@ -7,6 +7,8 @@
 */
 #include "Tap_Attiny85.h"
 
+#define numReadings 3
+
 class IR_Control
 {
     // Constructor - creates a IR_Control
@@ -14,18 +16,36 @@ class IR_Control
   public:
     IR_Control() {};
     int getDist() {
-      total = total + (analogRead(snsrInPin) - total) / 8;
-      return total;
+
+      distRead = analogRead(snsrInPin);
+      double t = (distRead - total) / 8;
+      total = total + t;
+
+      readIndex++;
+
+      if (readIndex >= numReadings) {
+        readIndex = 0;
+        return total;
+      }
+      delay1(1);
+      return -1;
     }
   private:
-    int total = 0;          // the running total
+    int distRead;           // the readings from the analog input
+    int readIndex = 0;      // the index of the current reading
+    double total = 0;          // the running total
+
 };
 
 IR_Control IR_on, IR_off;
 
+
 void setup()
 {
 #ifdef SERIAL_DEBUG
+  Serial.begin(115200);
+#endif
+#ifdef SERIAL_DEBUG2
   Serial.begin(115200);
 #endif
 #ifdef LED
@@ -74,9 +94,8 @@ void openTAP() {
 #endif
   digitalWrite(mtrPin1, LOW);
 
-  prevMillis = millis();
+  previousMillis = millis();
 
-  delay1(500);
 #ifdef SERIAL_DEBUG
   Serial.println("TAP Opened");
 #endif
@@ -89,6 +108,7 @@ void openTAP() {
 
   tapStatus = true;
 
+  delay1(openTime);
   return;
 }
 
@@ -98,30 +118,25 @@ void loop() {
   int distON = IR_on.getDist();
   digitalWrite(irOutPin, LOW);
   delay1(10);
-  int distOFF = IR_off.getDist();;
+  int distOFF = IR_off.getDist();
   if (distOFF >= 0 || distON >= 0) {
     int diff = distOFF - distON;
 #ifdef SERIAL_DEBUG
-    Serial.print(diff);
+    Serial.println(diff);
 #endif
 
-    IRthres = IRthres + (diff - IRthres) / 16;
-#ifdef SERIAL_DEBUG
-    Serial.print("\t");
-    Serial.println(IRthres);
-#endif
-
-
-    if (diff >= IRthres + 10 && !tapStatus && !tapConst)
-    {
-      if (thres) {
-        thres = false;
-        openTAP();
+    if (diff >= IRthres) {
+      if (!tapStatus && !tapConst)
+      {
+        if (thres) {
+          thres = false;
+          openTAP();
+        }
+        else
+          thres = true;
       }
-      else
-        thres = true;
     }
-    else if (diff < IRthres - 2)
+    else if (diff < IRthres )//* 0.9)
     {
       if (tapStatus == true)
         closeTAP();
@@ -130,7 +145,7 @@ void loop() {
     }
 
     unsigned long currentMillis = millis();
-    if (tapStatus && currentMillis - prevMillis >= WDT_count) {
+    if (tapStatus && currentMillis - previousMillis >= WDT_count) {
 #ifdef SERIAL_DEBUG
       Serial.println("WDT Clossed");
 #endif
@@ -140,3 +155,4 @@ void loop() {
   }
   delay1(1);
 }
+

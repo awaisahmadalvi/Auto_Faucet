@@ -11,7 +11,7 @@
 #define pulseTime 100
 
 // constants won't change:
-#define WDT_count 2 * 1000      // interval at which to Close TAP (milliseconds)
+#define WDT_count 5 * 1000      // interval at which to Close TAP (milliseconds)
 
 // Generally, you should use "unsigned long" for variables that hold time
 // The value will quickly become too large for an int to store

@@ -13,8 +13,8 @@
 #ifdef tiny
 
 #define irOutPin 1
-#define mtrPin1 4
-#define mtrPin2 3
+#define mtrPin1 3
+#define mtrPin2 4
 #define snsrInPin A1
 #define H_PWM 0
 
@@ -22,17 +22,17 @@
 
 #ifdef tiny85 
 
-#define irOutPin 1
-#define mtrPin1 3
-#define mtrPin2 4
-#define snsrInPin A1 /* TO-DO */
-#define H_PWM 0      /* TO-DO */
+#define irOutPin 3
+#define mtrPin1 1
+#define mtrPin2 0
+#define snsrInPin A0 /* TO-DO */
+#define H_PWM 2      /* TO-DO */
 
 #endif
 
 #ifdef nano
 
-#define irOutPin 6
+#define irOutPin 9
 #define mtrPin1 3
 #define mtrPin2 2
 #define snsrInPin A0
@@ -50,17 +50,20 @@
 
 #endif
 
-int IRthres = 512;
+#define IRthres 600
 #define pulseTime 100
+#define openTime 3000
+
 
 // constants won't change:
 #define WDT_count 10 * 1000      // interval at which to Close TAP (milliseconds)
 
 void delay1(int msec);
 
+
 // Generally, you should use "unsigned long" for variables that hold time
 // The value will quickly become too large for an int to store
-unsigned long prevMillis = 0;       // will store last time TAP was OPENED
+unsigned long previousMillis = 0;       // will store last time TAP was OPENED
 
 bool tapStatus = false, tapConst = false, thres = false;
 
