@@ -2,8 +2,8 @@
     Arduino proximity sensor
     by Awais Alvi 2018
 */
-//#define tiny true
-#define tiny85 true
+#define tiny true
+//#define tiny85 true
 //#define arduino true
 //#define nano true
 //#define SERIAL_DEBUG 1
@@ -50,11 +50,11 @@
 
 #endif
 
-double IRthres;
+int IRthres;
 #define pulseTime 100
 
 // constants won't change:
-#define WDT_count 5 * 1000      // interval at which to Close TAP (milliseconds)
+#define WDT_count 5 * 1000          // interval at which to Close TAP (milliseconds)
 
 void delay1(int msec);
 
@@ -67,7 +67,7 @@ bool tapStatus = false, tapConst = false, thres = false;
 void delay1(int msec)
 {
     //delay(1) is too costly in memory. Why is this so much cheaper? :D
-    long start = millis();
+    unsigned long start = millis();
     while (true)
     {
         if (millis() - start > msec) {

@@ -13,12 +13,12 @@ class IR_Control
         // and initializes the member variables and state
     public:
         IR_Control() {};
-        double getDist() {
+        int getDist() {
             total = total + (analogRead(snsrInPin) - total) / 8;
             return total;
         }
     private:
-        double total = 0;          // the running total
+        int total = 0;          // the running total
 };
 
 IR_Control IR_on, IR_off;
@@ -95,12 +95,12 @@ void openTAP() {
 void loop() {
     digitalWrite(irOutPin, HIGH);
     delay1(10);
-    double distON = IR_on.getDist();
+    int distON = IR_on.getDist();
     digitalWrite(irOutPin, LOW);
     delay1(10);
-    double distOFF = IR_off.getDist();;
+    int distOFF = IR_off.getDist();
     if (distOFF >= 0 || distON >= 0) {
-        double diff = distOFF - distON;
+        int diff = distOFF - distON;
 #ifdef SERIAL_DEBUG
         Serial.print(diff);
 #endif
@@ -111,7 +111,6 @@ void loop() {
         Serial.println(IRthres);
 #endif
 
-        //if (millis() > 2000) {
         // tapStatus is stating if tap is open by threshold or not
         // tapConst is stating that threshold is already crossed and WDT has turned off the tap
         if (diff >= IRthres + 20 && !tapStatus && !tapConst)
@@ -125,7 +124,7 @@ void loop() {
             if (tapConst == true)   // preventing reopening right after WDT trigger
                 tapConst = false;
         }
-        
+
         unsigned long currentMillis = millis();
         if (tapStatus && currentMillis - prevMillis >= WDT_count) {
 #ifdef SERIAL_DEBUG
@@ -134,7 +133,6 @@ void loop() {
             closeTAP();
             tapConst = true;
         }
-        //}
     }
     delay1(1);
 }
