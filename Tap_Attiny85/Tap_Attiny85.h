@@ -7,7 +7,8 @@
 //#define arduino true
 //#define nano true
 //#define SERIAL_DEBUG 1
-//#define SERIAL_DEBUG2 1
+//#define SERIAL_DEBUG_ONOFF 1
+//#define SERIAL_DEBUG_DIFF_THRESH 1
 //#define LED 13
 
 #ifdef tiny
@@ -42,11 +43,11 @@
 
 #ifdef arduino
 
-#define irOutPin 8
+#define irOutPin 6
 #define mtrPin1 11
 #define mtrPin2 12
 #define snsrInPin A0
-#define H_PWM 5     /* TO-DO */
+//#define H_PWM 5     /* TO-DO */
 
 #endif
 
@@ -54,7 +55,7 @@ int IRthres;
 #define pulseTime 100
 
 // constants won't change:
-#define WDT_count 5 * 1000          // interval at which to Close TAP (milliseconds)
+#define WDT_count 5 * 1000          
 
 void delay1(int msec);
 
@@ -62,16 +63,5 @@ void delay1(int msec);
 // The value will quickly become too large for an int to store
 unsigned long prevMillis = 0;       // will store last time TAP was OPENED
 
-bool tapStatus = false, tapConst = false, thres = false;
+bool tapOpen = false, tapWDT = false, thres = false;
 
-void delay1(int msec)
-{
-    //delay(1) is too costly in memory. Why is this so much cheaper? :D
-    unsigned long start = millis();
-    while (true)
-    {
-        if (millis() - start > msec) {
-            break;
-        }
-    }
-}

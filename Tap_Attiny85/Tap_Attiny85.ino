@@ -14,7 +14,7 @@ class IR_Control
     public:
         IR_Control() {};
         int getDist() {
-            total = total + (analogRead(snsrInPin) - total) / 8;
+            total = total + ((analogRead(snsrInPin) - total) >> 3);
             return total;
         }
     private:
@@ -22,6 +22,8 @@ class IR_Control
 };
 
 IR_Control IR_on, IR_off;
+
+int HOLDTIME = 3 * 1000;        // interval to HOLD TAP (milliseconds)
 
 void setup()
 {
@@ -34,7 +36,9 @@ void setup()
     pinMode(irOutPin, OUTPUT);
     pinMode(mtrPin1, OUTPUT);
     pinMode(mtrPin2, OUTPUT);
+    prevMillis = 0;
 }
+
 
 void closeTAP() {
     digitalWrite(mtrPin1, LOW);
@@ -42,7 +46,7 @@ void closeTAP() {
 #ifdef H_PWM
     digitalWrite(H_PWM, HIGH);
 #endif
-    delay1(pulseTime);
+    delay(pulseTime);
 #ifdef H_PWM
     digitalWrite(H_PWM, LOW);
 #endif
@@ -54,11 +58,11 @@ void closeTAP() {
 
 #ifdef LED
     digitalWrite(LED, HIGH);
-    delay1(pulseTime);
+    delay(pulseTime);
     digitalWrite(LED, LOW);
 #endif
 
-    tapStatus = false;
+    tapOpen = false;
     return;
 }
 
@@ -68,71 +72,90 @@ void openTAP() {
 #ifdef H_PWM
     digitalWrite(H_PWM, HIGH);
 #endif
-    delay1(pulseTime);
+    delay(pulseTime);
 #ifdef H_PWM
     digitalWrite(H_PWM, LOW);
 #endif
     digitalWrite(mtrPin1, LOW);
 
     prevMillis = millis();
+    delay(HOLDTIME);
 
-    delay1(2000);
 #ifdef SERIAL_DEBUG
     Serial.println("TAP Opened");
 #endif
 
 #ifdef LED
     digitalWrite(LED, HIGH);
-    delay1(pulseTime);
+    delay(pulseTime);
     digitalWrite(LED, LOW);
 #endif
 
-    tapStatus = true;
+    tapOpen = true;
 
     return;
 }
 
+
 void loop() {
+
     digitalWrite(irOutPin, HIGH);
-    delay1(10);
-    int distON = IR_on.getDist();
+    delay(10);
+    int distON = analogRead(snsrInPin);//IR_on.getDist();//analogRead(snsrInPin);
+    delay(50);
+
+#ifdef SERIAL_DEBUG_ONOFF
+    Serial.print("HIGH\t");
+    Serial.print(distON);
+#endif
+
     digitalWrite(irOutPin, LOW);
-    delay1(10);
-    int distOFF = IR_off.getDist();
+    delay(10);
+    int distOFF = analogRead(snsrInPin);//IR_off.getDist();//analogRead(snsrInPin);
+    delay(50);
+
+#ifdef SERIAL_DEBUG_ONOFF
+    Serial.print("\t,LOW\t");
+    Serial.println(distOFF);
+#endif
+
     if (distOFF >= 0 || distON >= 0) {
         int diff = distOFF - distON;
-#ifdef SERIAL_DEBUG
+
+#ifdef SERIAL_DEBUG_DIFF_THRESH
         Serial.print(diff);
 #endif
 
-        IRthres = IRthres + (diff - IRthres) / 32;
-#ifdef SERIAL_DEBUG
+        IRthres = IRthres + ((diff - IRthres) >> 3);
+#ifdef SERIAL_DEBUG_DIFF_THRESH
         Serial.print("\t");
         Serial.println(IRthres);
 #endif
 
-        // tapStatus is stating if tap is open by threshold or not
-        // tapConst is stating that threshold is already crossed and WDT has turned off the tap
-        if (diff >= IRthres + 20 && !tapStatus && !tapConst)
-        {
-            openTAP();
-        }
-        else if (diff < IRthres - 5)
-        {
-            if (tapStatus == true)  // check if tap is already opened
-                closeTAP();
-            if (tapConst == true)   // preventing reopening right after WDT trigger
-                tapConst = false;
-        }
 
-        unsigned long currentMillis = millis();
-        if (tapStatus && currentMillis - prevMillis >= WDT_count) {
+        if (millis() - prevMillis >= HOLDTIME) {
+            HOLDTIME = 2 * 1000;
+            // tapOpen is stating if tap is open by threshold or not
+            // tapWDT is stating that threshold is already crossed and WDT has turned off the tap
+            if (diff >= IRthres + 80  && !tapOpen && !tapWDT) {
+                openTAP();
+            }
+            else if (diff <= IRthres)
+            {
+                if (tapOpen == true)  // check if tap is already opened
+                    closeTAP();
+                if (tapWDT == true)   // preventing reopening right after WDT trigger
+                    tapWDT = false;
+            }
+            if (tapOpen && millis() - prevMillis >= WDT_count) {
 #ifdef SERIAL_DEBUG
-            Serial.println("WDT Clossed");
+                Serial.println("WDT Clossed");
 #endif
-            closeTAP();
-            tapConst = true;
+                closeTAP();
+                tapWDT = true;
+            }
         }
     }
-    delay1(1);
+    delay(1);
 }
+
