@@ -3,7 +3,6 @@
     by Awais Alvi 2018
 */
 #define tiny true
-//#define tiny85 true
 //#define arduino true
 //#define nano true
 //#define SERIAL_DEBUG 1
@@ -18,16 +17,6 @@
 #define mtrPin2 3
 #define snsrInPin A1
 #define H_PWM 0
-
-#endif
-
-#ifdef tiny85 
-
-#define irOutPin 1
-#define mtrPin1 4
-#define mtrPin2 3
-#define snsrInPin A1    /* TO-DO */
-#define H_PWM 0         /* TO-DO */
 
 #endif
 
@@ -55,7 +44,7 @@ int IRthres;
 #define pulseTime 100
 
 // constants won't change:
-#define WDT_count 5 * 1000          
+#define WDT_count 7 * 1000          
 
 void delay1(int msec);
 

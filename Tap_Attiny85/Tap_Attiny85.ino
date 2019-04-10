@@ -156,6 +156,13 @@ void loop() {
             }
         }
     }
-    delay(1);
+    
+/*
+    openTAP();
+    delay(10);
+    closeTAP();
+*/
+    
+    delay(10);
 }
 
